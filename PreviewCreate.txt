@@ -1,0 +1,114 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class PreviewCreate : MonoBehaviour {
+
+    public Material orbMat;
+    public Rigidbody mainAttract;
+    public Button startPause;
+    GameObject pSphere;
+
+    float pos;
+
+    bool previewActive = false;
+
+	public void CreatePreview()
+    {
+        if (previewActive == false)
+        {
+            previewActive = true;
+
+            pSphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            pSphere.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+            pSphere.name = "Orbit Ball";
+            pSphere.tag = "Preview";
+            pSphere.GetComponent<MeshRenderer>().material = orbMat;
+            Destroy(pSphere.GetComponent<SphereCollider>());
+
+            pSphere.AddComponent<LineRenderer>();
+            LineRenderer  
+
+
+
+
+                                      lR = pSphere.GetComponent<LineRenderer>();
+            lR.startWidth = 0.1f;
+            lR.endWidth = 0.1f;
+            lR.receiveShadows = false;
+            lR.allowOcclusionWhenDynamic = false;
+            lR.material = orbMat;
+
+            pSphere.AddComponent<OrbitPath>();
+            OrbitPath path = pSphere.GetComponent<OrbitPath>();
+            path.lr = lR;
+            path.position = pSphere.transform;
+
+            pSphere.AddComponent<MoveBall>();
+            MoveBall info = pSphere.GetComponent<MoveBall>();
+            info.info = pSphere.transform;
+        }
+    }
+
+    public void Update()
+    {
+        if(previewActive && Input.GetMouseButtonDown(0))
+        {
+            CreateObj();
+            DeletePreview();       
+        }
+    }
+
+    public void DeletePreview()
+    {
+        if (GameObject.FindGameObjectsWithTag("Preview") != null)
+        {
+            GameObject[] previewObjs = GameObject.FindGameObjectsWithTag("Preview");
+
+            for(int i = 0; i < previewObjs.Length; i++)
+            {
+                Destroy(previewObjs[i]);
+            }
+        }
+
+        previewActive = false;
+    }
+
+    public void CreateObj()
+    {
+        pos = pSphere.transform.position.x;
+
+        GameObject obj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        obj.transform.position = new Vector3(pos, 0, 0);
+        obj.name = "GravObj";
+
+        obj.AddComponent<Rigidbody>();
+        Rigidbody rgdb = obj.GetComponent<Rigidbody>();
+        rgdb.mass = 50;
+        rgdb.drag = 0;
+        rgdb.angularDrag = 0;
+        rgdb.useGravity = false;
+
+        obj.AddComponent<ObjGravity>();
+        ObjGravity grav = obj.GetComponent<ObjGravity>();
+        grav.rb = rgdb;
+
+        float velocity = 0;
+
+        if (pos < 0)
+        {
+            velocity = -Mathf.Pow((0.67f * 500) / -pos, 0.5f);
+        }
+        else if(pos > 0)
+        {
+            velocity = Mathf.Pow((0.67f * 500) / pos, 0.5f);
+        }
+
+        rgdb.velocity = new Vector3(0, 0, velocity);
+
+        grav.pause = GetComponent<UIScript>().pause;
+
+        startPause.onClick.AddListener(grav.startPause);
+    }
+}

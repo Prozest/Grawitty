@@ -1,0 +1,80 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class ObjGravity : MonoBehaviour {
+
+    public Rigidbody rb;
+    public static List<ObjGravity> Attractors;
+
+    float G = 0.67f;
+
+    Vector3 velocity;
+    public bool pause = false;
+
+    void FixedUpdate()
+    {
+        foreach(ObjGravity attractor in Attractors)
+        {
+            if(attractor != this)
+            Attract(attractor);
+        }
+    }
+
+    void Start()
+    {
+        velocity = rb.velocity;
+
+        if(pause)
+        {
+            pause = !pause;
+            startPause();
+        }
+    }
+
+    void OnEnable()
+    {
+        if (Attractors == null)
+            Attractors = new List<ObjGravity>();
+
+        Attractors.Add(this);
+    }
+
+    void OnDisable()
+    {
+        Attractors.Remove(this);
+    }
+
+    public void startPause()
+    {
+        if (pause == false)
+        {
+            velocity = rb.velocity;
+            OnDisable();
+            rb.velocity = new Vector3(0, 0, 0);
+
+            pause = true;
+        }
+        else
+        {
+            rb.velocity = velocity;
+            OnEnable();
+
+            pause = false;
+        }
+    }
+
+    void Attract (ObjGravity otherObj)
+    {
+        Rigidbody rbToAttract = otherObj.rb;
+
+        Vector3 direction = rb.position - rbToAttract.position;
+        float distance = direction.sqrMagnitude;
+
+        float forceMagnitude =  G * (rb.mass * rbToAttract.mass) / (distance);
+        Vector3 force = direction.normalized * forceMagnitude;
+
+        rbToAttract.AddForce(force);
+    }
+}
